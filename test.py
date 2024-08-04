@@ -61,18 +61,38 @@ def is_valid_move(showRes, new_x, new_y):
 
     return True
 
-def make_move(showRes, dir, step):
-    if(dir == 'x'): 
-        m = move(gameId, curr_id, curr_x + step, curr_y)
-    elif(dir == 'y'):
-        m = move(gameId, curr_id, curr_x, curr_y + step)
+def make_move(curr_x, curr_y, opp_x, opp_y, length):
+    range = length / 5
+    distance = ((curr_x - opp_x)**2 + (curr_y - opp_y)**2)**0.5
 
+    
+    # Calculate the vector to the opponent
+    dx, dy = opp_x - curr_x, opp_y - curr_y
+
+    # Normalize the vector to get the direction -- accounts for the negative case
+    direction = dx / abs(dx) if dx != 0 else 0, dy / abs(dy) if dy != 0 else 0
+
+    if distance > range:
+
+        # Move in the direction that is closest to the true path to the opponent
+        if abs(direction[0]) > abs(direction[1]):
+            return curr_x + direction[0], curr_y
+        else:
+            return curr_x, curr_y + direction[1]
+    else:
+        if abs(direction[0]) > abs(direction[1]):
+            return curr_x, curr_y + direction[1]
+        else:
+            return curr_x + direction[0], curr_y
+            
   
-# game_info = create_game(True, 25, 2, 1)
-# print(game_info)
-# gameId = game_info["id"]
+game_info = create_game(True, 25, 2, 2)
+print(game_info)
+gameId = game_info["id"]
 
-gameId = 589
+
+
+# gameId = 734
 
 
 r = join_game(gameId, "Sid")
@@ -106,6 +126,8 @@ show_res = show_game(gameId)
 curr_info = get_curr_from_show(show_res)
 curr_id = curr_info['id']
 
+length = len(show_res['games'][0]['board'])
+
 moves = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 prev_move = (0, 0)
 
@@ -122,8 +144,22 @@ while(True):
         curr_x = curr_info['x']
         curr_y = curr_info['y']
 
+        #print("Here: ")
+        #print(show_res['games'][0]['players'])
+
+        opp_x = show_res['games'][0]['players'][0]['x']
+        opp_y = show_res['games'][0]['players'][0]['y']
+
+        turn_x, turn_y = make_move(curr_x, curr_y, opp_x, opp_y, length)
+        print(turn_x, ", ", turn_y)
+        if(is_valid_move(show_res, int(turn_x), int(turn_y))):
+            move(gameId, curr_id, int(turn_x), int(turn_y))
+            continue
+        
+
         repeat_x = curr_x + prev_move[0]
         repeat_y = curr_y + prev_move[1]
+
         if prev_move != (0, 0) and is_valid_move(show_res, repeat_x, repeat_y):
             move(gameId, curr_id, repeat_x, repeat_y)
             continue
